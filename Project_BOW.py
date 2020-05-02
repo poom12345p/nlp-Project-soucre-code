@@ -3,7 +3,7 @@ import numpy as np
 import deepcut
 from gensim.models import Word2Vec
 from keras.models import Model
-from keras.layers import Input, Dense, SimpleRNN, GRU, LSTM, Dropout, Bidirectional
+from keras.layers import Input, Dense, SimpleRNN, GRU, LSTM, Dropout, Bidirectional, Concatenate
 from keras.utils import to_categorical
 import matplotlib.pyplot as plt
 from random import shuffle
@@ -71,9 +71,13 @@ for i in range(0,len(words)):
     word_vectors[i] = word_vectors[i]/count
 
     inputLayer = Input(shape=(len(vocab),))
-h1 = Dense(64, activation='tanh')(inputLayer)
+h1 = Dense(128, activation='tanh')(inputLayer)
 h2 = Dense(64, activation='tanh')(h1)
-outputLayer = Dense(3, activation='softmax')(h2)
+h3 = Dense(64, activation='tanh')(h1)
+h4 = Dense(64, activation='tanh')(h1)
+c1 = Concatenate()([h2, h3,h4])
+
+outputLayer = Dense(3, activation='softmax')(c1)
 model = Model(inputs=inputLayer, outputs=outputLayer)
 #-----------------------------------------------------------------
 model.compile(optimizer='adam',
@@ -88,7 +92,7 @@ model.save('Project_model_Bow.h5')
 #------------------Evaluate by test set---------------------------  
 
 
-file = open('input.txt', 'r',encoding = 'utf-8-sig')
+file = open('input_t1.txt', 'r',encoding = 'utf-8-sig')
 data = np.asarray([[x for x in line.split('::')] for line in file.readlines()])
 sentences_ar = [d[1] for d in data]
 sentences_ar = [s.replace('\n','') for s in sentences_ar]
@@ -111,41 +115,41 @@ y_pred = model.predict(word_vectors2)
 
 
 print(y_pred)
-# file = open('ans2.txt', 'r',encoding = 'utf-8-sig')
-# data2 = np.asarray([[x for x in line.split('::')] for line in file.readlines()])
-# labelsS = [d[1] for d in data2]
-# labelsS  = [s.replace('\n','') for s in labelsS ]
-# labels_ar = []
-# for l in labelsS:
-#         if l == 'H':
-#             labels_ar.append(0)
-#         elif l == 'M':
-#             labels_ar.append(1)
-#         elif l== 'P':
-#             labels_ar.append(2)
+file = open('ans_test.txt', 'r',encoding = 'utf-8-sig')
+data2 = np.asarray([[x for x in line.split('::')] for line in file.readlines()])
+labelsS = [d[1] for d in data2]
+labelsS  = [s.replace('\n','') for s in labelsS ]
+labels_ar = []
+for l in labelsS:
+        if l == 'H':
+            labels_ar.append(0)
+        elif l == 'M':
+            labels_ar.append(1)
+        elif l== 'P':
+            labels_ar.append(2)
 
-file = open('ans.txt', 'w',encoding = 'utf-8-sig')
-for i in range(0, len(y_pred)):
-    #max_value = max(y_pred[i])
-    max_index = y_pred[i].argmax()
-    #print(max_index)
-    S = ''
-    if  max_index == 0:
-            S='H'
-           # print('append 0')
-    elif  max_index == 1:
-           S='M'
-           # print('append 1')
-    elif  max_index== 2:
-            S='P'
-           # print('append 2')
+# file = open('ans2.txt', 'w',encoding = 'utf-8-sig')
+# for i in range(0, len(y_pred)):
+#     #max_value = max(y_pred[i])
+#     max_index = y_pred[i].argmax()
+#     #print(max_index)
+#     S = ''
+#     if  max_index == 0:
+#             S='H'
+#            # print('append 0')
+#     elif  max_index == 1:
+#            S='M'
+#            # print('append 1')
+#     elif  max_index== 2:
+#             S='P'
+#            # print('append 2')
 
-    file.write("{0}::{1}\n" .format((i+1),(S)))
-file.close()
+#     file.write("{0}::{1}\n" .format((i+1),(S)))
+# file.close()
 
-# cm = confusion_matrix(labels_ar, y_pred.argmax(axis=1))
-# print('Confusion Matrix')
-# print(cm)
-# score = model.evaluate(word_vectors , to_categorical(labels_ar))
+cm = confusion_matrix(labels_ar, y_pred.argmax(axis=1))
+print('Confusion Matrix')
+print(cm)
+score = model.evaluate(word_vectors2 , to_categorical(labels_ar))
 
-# print(score)
+print(score)
